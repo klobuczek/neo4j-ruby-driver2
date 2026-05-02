@@ -76,9 +76,9 @@ RSpec.describe Neo4j::Driver::Bolt::Connection do
     context 'with an IPv6 URI and no resolver' do
       subject(:conn) { build_connection('bolt://[::1]:7687') }
 
-      # Ruby's URI parser strips brackets: URI("bolt://[::1]:7687").host => "::1"
-      it 'returns [["::1", 7687]]' do
-        expect(conn.send(:resolved_addresses)).to eq([['::1', 7687]])
+      # Ruby 3.4+: URI("bolt://[::1]:7687").host => "[::1]" (brackets preserved)
+      it 'returns [["[::1]", 7687]]' do
+        expect(conn.send(:resolved_addresses)).to eq([['[::1]', 7687]])
       end
     end
 
@@ -132,7 +132,7 @@ RSpec.describe Neo4j::Driver::Bolt::Connection do
 
     it 'stores IPv6 address as "[host]:port" (bracketed)' do
       conn = build_connection('bolt://[::1]:7687')
-      # Ruby's URI strips brackets, so @uri.host == "::1"
+      # Ruby 3.4+: @uri.host returns "[::1]"; format_address preserves the brackets
       allow(TCPSocket).to receive(:new).and_return(double('socket',
         setsockopt: nil, closed?: false, close: nil, flush: nil))
       allow(conn).to receive(:perform_handshake)
